@@ -18,11 +18,9 @@ using HealthCare.Authorization.Users;
 using HealthCare.Models.TokenAuth;
 using HealthCare.MultiTenancy;
 
-namespace HealthCare.Controllers
-{
+namespace HealthCare.Controllers {
     [Route("api/[controller]/[action]")]
-    public class TokenAuthController : HealthCareControllerBase
-    {
+    public class TokenAuthController : HealthCareControllerBase {
         private readonly LogInManager _logInManager;
         private readonly ITenantCache _tenantCache;
         private readonly AbpLoginResultTypeHelper _abpLoginResultTypeHelper;
@@ -38,8 +36,7 @@ namespace HealthCare.Controllers
             TokenAuthConfiguration configuration,
             IExternalAuthConfiguration externalAuthConfiguration,
             IExternalAuthManager externalAuthManager,
-            UserRegistrationManager userRegistrationManager)
-        {
+            UserRegistrationManager userRegistrationManager) {
             _logInManager = logInManager;
             _tenantCache = tenantCache;
             _abpLoginResultTypeHelper = abpLoginResultTypeHelper;
@@ -50,8 +47,7 @@ namespace HealthCare.Controllers
         }
 
         [HttpPost]
-        public async Task<AuthenticateResultModel> Authenticate([FromBody] AuthenticateModel model)
-        {
+        public async Task<AuthenticateResultModel> Authenticate([FromBody] AuthenticateModel model) {
             var loginResult = await GetLoginResultAsync(
                 model.UserNameOrEmailAddress,
                 model.Password,
@@ -60,8 +56,7 @@ namespace HealthCare.Controllers
 
             var accessToken = CreateAccessToken(CreateJwtClaims(loginResult.Identity));
 
-            return new AuthenticateResultModel
-            {
+            return new AuthenticateResultModel {
                 AccessToken = accessToken,
                 EncryptedAccessToken = GetEncrpyedAccessToken(accessToken),
                 ExpireInSeconds = (int)_configuration.Expiration.TotalSeconds,
@@ -70,45 +65,36 @@ namespace HealthCare.Controllers
         }
 
         [HttpGet]
-        public List<ExternalLoginProviderInfoModel> GetExternalAuthenticationProviders()
-        {
+        public List<ExternalLoginProviderInfoModel> GetExternalAuthenticationProviders() {
             return ObjectMapper.Map<List<ExternalLoginProviderInfoModel>>(_externalAuthConfiguration.Providers);
         }
 
         [HttpPost]
-        public async Task<ExternalAuthenticateResultModel> ExternalAuthenticate([FromBody] ExternalAuthenticateModel model)
-        {
+        public async Task<ExternalAuthenticateResultModel> ExternalAuthenticate([FromBody] ExternalAuthenticateModel model) {
             var externalUser = await GetExternalUserInfo(model);
 
             var loginResult = await _logInManager.LoginAsync(new UserLoginInfo(model.AuthProvider, model.ProviderKey, model.AuthProvider), GetTenancyNameOrNull());
 
-            switch (loginResult.Result)
-            {
-                case AbpLoginResultType.Success:
-                    {
+            switch (loginResult.Result) {
+                case AbpLoginResultType.Success: {
                         var accessToken = CreateAccessToken(CreateJwtClaims(loginResult.Identity));
-                        return new ExternalAuthenticateResultModel
-                        {
+                        return new ExternalAuthenticateResultModel {
                             AccessToken = accessToken,
                             EncryptedAccessToken = GetEncrpyedAccessToken(accessToken),
                             ExpireInSeconds = (int)_configuration.Expiration.TotalSeconds
                         };
                     }
-                case AbpLoginResultType.UnknownExternalLogin:
-                    {
+                case AbpLoginResultType.UnknownExternalLogin: {
                         var newUser = await RegisterExternalUserAsync(externalUser);
-                        if (!newUser.IsActive)
-                        {
-                            return new ExternalAuthenticateResultModel
-                            {
+                        if (!newUser.IsActive) {
+                            return new ExternalAuthenticateResultModel {
                                 WaitingForActivation = true
                             };
                         }
 
                         // Try to login again with newly registered user!
                         loginResult = await _logInManager.LoginAsync(new UserLoginInfo(model.AuthProvider, model.ProviderKey, model.AuthProvider), GetTenancyNameOrNull());
-                        if (loginResult.Result != AbpLoginResultType.Success)
-                        {
+                        if (loginResult.Result != AbpLoginResultType.Success) {
                             throw _abpLoginResultTypeHelper.CreateExceptionForFailedLoginAttempt(
                                 loginResult.Result,
                                 model.ProviderKey,
@@ -116,14 +102,12 @@ namespace HealthCare.Controllers
                             );
                         }
 
-                        return new ExternalAuthenticateResultModel
-                        {
+                        return new ExternalAuthenticateResultModel {
                             AccessToken = CreateAccessToken(CreateJwtClaims(loginResult.Identity)),
                             ExpireInSeconds = (int)_configuration.Expiration.TotalSeconds
                         };
                     }
-                default:
-                    {
+                default: {
                         throw _abpLoginResultTypeHelper.CreateExceptionForFailedLoginAttempt(
                             loginResult.Result,
                             model.ProviderKey,
@@ -133,8 +117,7 @@ namespace HealthCare.Controllers
             }
         }
 
-        private async Task<User> RegisterExternalUserAsync(ExternalAuthUserInfo externalUser)
-        {
+        private async Task<User> RegisterExternalUserAsync(ExternalAuthUserInfo externalUser) {
             var user = await _userRegistrationManager.RegisterAsync(
                 externalUser.Name,
                 externalUser.Surname,
@@ -159,33 +142,27 @@ namespace HealthCare.Controllers
             return user;
         }
 
-        private async Task<ExternalAuthUserInfo> GetExternalUserInfo(ExternalAuthenticateModel model)
-        {
+        private async Task<ExternalAuthUserInfo> GetExternalUserInfo(ExternalAuthenticateModel model) {
             var userInfo = await _externalAuthManager.GetUserInfo(model.AuthProvider, model.ProviderAccessCode);
-            if (userInfo.ProviderKey != model.ProviderKey)
-            {
+            if (userInfo.ProviderKey != model.ProviderKey) {
                 throw new UserFriendlyException(L("CouldNotValidateExternalUser"));
             }
 
             return userInfo;
         }
 
-        private string GetTenancyNameOrNull()
-        {
-            if (!AbpSession.TenantId.HasValue)
-            {
+        private string GetTenancyNameOrNull() {
+            if (!AbpSession.TenantId.HasValue) {
                 return null;
             }
 
             return _tenantCache.GetOrNull(AbpSession.TenantId.Value)?.TenancyName;
         }
 
-        private async Task<AbpLoginResult<Tenant, User>> GetLoginResultAsync(string usernameOrEmailAddress, string password, string tenancyName)
-        {
+        private async Task<AbpLoginResult<Tenant, User>> GetLoginResultAsync(string usernameOrEmailAddress, string password, string tenancyName) {
             var loginResult = await _logInManager.LoginAsync(usernameOrEmailAddress, password, tenancyName);
 
-            switch (loginResult.Result)
-            {
+            switch (loginResult.Result) {
                 case AbpLoginResultType.Success:
                     return loginResult;
                 default:
@@ -193,8 +170,7 @@ namespace HealthCare.Controllers
             }
         }
 
-        private string CreateAccessToken(IEnumerable<Claim> claims, TimeSpan? expiration = null)
-        {
+        private string CreateAccessToken(IEnumerable<Claim> claims, TimeSpan? expiration = null) {
             var now = DateTime.UtcNow;
 
             var jwtSecurityToken = new JwtSecurityToken(
@@ -209,8 +185,7 @@ namespace HealthCare.Controllers
             return new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
         }
 
-        private static List<Claim> CreateJwtClaims(ClaimsIdentity identity)
-        {
+        private static List<Claim> CreateJwtClaims(ClaimsIdentity identity) {
             var claims = identity.Claims.ToList();
             var nameIdClaim = claims.First(c => c.Type == ClaimTypes.NameIdentifier);
 
@@ -225,8 +200,7 @@ namespace HealthCare.Controllers
             return claims;
         }
 
-        private string GetEncrpyedAccessToken(string accessToken)
-        {
+        private string GetEncrpyedAccessToken(string accessToken) {
             return SimpleStringCipher.Instance.Encrypt(accessToken, AppConsts.DefaultPassPhrase);
         }
     }

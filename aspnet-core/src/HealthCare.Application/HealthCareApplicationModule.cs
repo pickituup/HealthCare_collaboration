@@ -1,22 +1,20 @@
 ﻿using Abp.AutoMapper;
 using Abp.Modules;
 using Abp.Reflection.Extensions;
+using Castle.MicroKernel.Registration;
 using HealthCare.Authorization;
+using HealthCare.TestingFirstApi;
 
-namespace HealthCare
-{
+namespace HealthCare {
     [DependsOn(
-        typeof(HealthCareCoreModule), 
+        typeof(HealthCareCoreModule),
         typeof(AbpAutoMapperModule))]
-    public class HealthCareApplicationModule : AbpModule
-    {
-        public override void PreInitialize()
-        {
+    public class HealthCareApplicationModule : AbpModule {
+        public override void PreInitialize() {
             Configuration.Authorization.Providers.Add<HealthCareAuthorizationProvider>();
         }
 
-        public override void Initialize()
-        {
+        public override void Initialize() {
             var thisAssembly = typeof(HealthCareApplicationModule).GetAssembly();
 
             IocManager.RegisterAssemblyByConvention(thisAssembly);

@@ -4,36 +4,32 @@ using Abp.Zero.Configuration;
 using HealthCare.Authorization.Accounts.Dto;
 using HealthCare.Authorization.Users;
 
-namespace HealthCare.Authorization.Accounts
-{
-    public class AccountAppService : HealthCareAppServiceBase, IAccountAppService
-    {
+namespace HealthCare.Authorization.Accounts {
+    public class AccountAppService : HealthCareAppServiceBase, IAccountAppService {
         private readonly UserRegistrationManager _userRegistrationManager;
 
-        public AccountAppService(
-            UserRegistrationManager userRegistrationManager)
-        {
+        /// <summary>
+        ///     ctor().
+        /// </summary>
+        /// <param name="userRegistrationManager"></param>
+        public AccountAppService(UserRegistrationManager userRegistrationManager) {
             _userRegistrationManager = userRegistrationManager;
         }
 
-        public async Task<IsTenantAvailableOutput> IsTenantAvailable(IsTenantAvailableInput input)
-        {
+        public async Task<IsTenantAvailableOutput> IsTenantAvailable(IsTenantAvailableInput input) {
             var tenant = await TenantManager.FindByTenancyNameAsync(input.TenancyName);
-            if (tenant == null)
-            {
+            if (tenant == null) {
                 return new IsTenantAvailableOutput(TenantAvailabilityState.NotFound);
             }
 
-            if (!tenant.IsActive)
-            {
+            if (!tenant.IsActive) {
                 return new IsTenantAvailableOutput(TenantAvailabilityState.InActive);
             }
 
             return new IsTenantAvailableOutput(TenantAvailabilityState.Available, tenant.Id);
         }
 
-        public async Task<RegisterOutput> Register(RegisterInput input)
-        {
+        public async Task<RegisterOutput> Register(RegisterInput input) {
             var user = await _userRegistrationManager.RegisterAsync(
                 input.Name,
                 input.Surname,
@@ -45,8 +41,7 @@ namespace HealthCare.Authorization.Accounts
 
             var isEmailConfirmationRequiredForLogin = await SettingManager.GetSettingValueAsync<bool>(AbpZeroSettingNames.UserManagement.IsEmailConfirmationRequiredForLogin);
 
-            return new RegisterOutput
-            {
+            return new RegisterOutput {
                 CanLogin = user.IsActive && (user.IsEmailConfirmed || !isEmailConfirmationRequiredForLogin)
             };
         }

@@ -25,21 +25,17 @@ using HealthCare.Owin;
 using Abp.AspNetCore.SignalR.Hubs;
 #endif
 
-namespace HealthCare.Web.Host.Startup
-{
-    public class Startup
-    {
+namespace HealthCare.Web.Host.Startup {
+    public class Startup {
         private const string _defaultCorsPolicyName = "localhost";
 
         private readonly IConfigurationRoot _appConfiguration;
 
-        public Startup(IHostingEnvironment env)
-        {
+        public Startup(IHostingEnvironment env) {
             _appConfiguration = env.GetAppConfiguration();
         }
 
-        public IServiceProvider ConfigureServices(IServiceCollection services)
-        {
+        public IServiceProvider ConfigureServices(IServiceCollection services) {
             // MVC
             services.AddMvc(
                 options => options.Filters.Add(new CorsAuthorizationFilterFactory(_defaultCorsPolicyName))
@@ -70,14 +66,12 @@ namespace HealthCare.Web.Host.Startup
             );
 
             // Swagger - Enable this line and the related lines in Configure method to enable swagger UI
-            services.AddSwaggerGen(options =>
-            {
+            services.AddSwaggerGen(options => {
                 options.SwaggerDoc("v1", new Info { Title = "HealthCare API", Version = "v1" });
                 options.DocInclusionPredicate((docName, description) => true);
 
                 // Define the BearerAuth scheme that's in use
-                options.AddSecurityDefinition("bearerAuth", new ApiKeyScheme()
-                {
+                options.AddSecurityDefinition("bearerAuth", new ApiKeyScheme() {
                     Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
                     Name = "Authorization",
                     In = "header",
@@ -96,8 +90,7 @@ namespace HealthCare.Web.Host.Startup
             );
         }
 
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
-        {
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory) {
             app.UseAbp(options => { options.UseAbpRequestLocalization = false; }); // Initializes ABP framework.
 
             app.UseCors(_defaultCorsPolicyName); // Enable CORS!
@@ -112,14 +105,12 @@ namespace HealthCare.Web.Host.Startup
             // Integrate with OWIN
             app.UseAppBuilder(ConfigureOwinServices);
 #elif FEATURE_SIGNALR_ASPNETCORE
-            app.UseSignalR(routes =>
-            {
+            app.UseSignalR(routes => {
                 routes.MapHub<AbpCommonHub>("/signalr");
             });
 #endif
 
-            app.UseMvc(routes =>
-            {
+            app.UseMvc(routes => {
                 routes.MapRoute(
                     name: "defaultWithArea",
                     template: "{area}/{controller=Home}/{action=Index}/{id?}");
@@ -132,8 +123,7 @@ namespace HealthCare.Web.Host.Startup
             // Enable middleware to serve generated Swagger as a JSON endpoint
             app.UseSwagger();
             // Enable middleware to serve swagger-ui assets (HTML, JS, CSS etc.)
-            app.UseSwaggerUI(options =>
-            {
+            app.UseSwaggerUI(options => {
                 options.InjectOnCompleteJavaScript("/swagger/ui/abp.js");
                 options.InjectOnCompleteJavaScript("/swagger/ui/on-complete.js");
                 options.SwaggerEndpoint("/swagger/v1/swagger.json", "HealthCare API V1");

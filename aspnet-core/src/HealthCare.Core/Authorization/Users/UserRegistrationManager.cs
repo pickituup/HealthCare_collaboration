@@ -12,10 +12,8 @@ using Abp.UI;
 using HealthCare.Authorization.Roles;
 using HealthCare.MultiTenancy;
 
-namespace HealthCare.Authorization.Users
-{
-    public class UserRegistrationManager : DomainService
-    {
+namespace HealthCare.Authorization.Users {
+    public class UserRegistrationManager : DomainService {
         public IAbpSession AbpSession { get; set; }
 
         private readonly TenantManager _tenantManager;
@@ -27,8 +25,7 @@ namespace HealthCare.Authorization.Users
             TenantManager tenantManager,
             UserManager userManager,
             RoleManager roleManager,
-            IPasswordHasher<User> passwordHasher)
-        {
+            IPasswordHasher<User> passwordHasher) {
             _tenantManager = tenantManager;
             _userManager = userManager;
             _roleManager = roleManager;
@@ -37,14 +34,12 @@ namespace HealthCare.Authorization.Users
             AbpSession = NullAbpSession.Instance;
         }
 
-        public async Task<User> RegisterAsync(string name, string surname, string emailAddress, string userName, string plainPassword, bool isEmailConfirmed)
-        {
+        public async Task<User> RegisterAsync(string name, string surname, string emailAddress, string userName, string plainPassword, bool isEmailConfirmed) {
             CheckForTenant();
 
             var tenant = await GetActiveTenantAsync();
 
-            var user = new User
-            {
+            var user = new User {
                 TenantId = tenant.Id,
                 Name = name,
                 Surname = surname,
@@ -59,8 +54,7 @@ namespace HealthCare.Authorization.Users
 
             user.Password = _passwordHasher.HashPassword(user, plainPassword);
 
-            foreach (var defaultRole in await _roleManager.Roles.Where(r => r.IsDefault).ToListAsync())
-            {
+            foreach (var defaultRole in await _roleManager.Roles.Where(r => r.IsDefault).ToListAsync()) {
                 user.Roles.Add(new UserRole(tenant.Id, user.Id, defaultRole.Id));
             }
 
@@ -70,42 +64,34 @@ namespace HealthCare.Authorization.Users
             return user;
         }
 
-        private void CheckForTenant()
-        {
-            if (!AbpSession.TenantId.HasValue)
-            {
+        private void CheckForTenant() {
+            if (!AbpSession.TenantId.HasValue) {
                 throw new InvalidOperationException("Can not register host users!");
             }
         }
 
-        private async Task<Tenant> GetActiveTenantAsync()
-        {
-            if (!AbpSession.TenantId.HasValue)
-            {
+        private async Task<Tenant> GetActiveTenantAsync() {
+            if (!AbpSession.TenantId.HasValue) {
                 return null;
             }
 
             return await GetActiveTenantAsync(AbpSession.TenantId.Value);
         }
 
-        private async Task<Tenant> GetActiveTenantAsync(int tenantId)
-        {
+        private async Task<Tenant> GetActiveTenantAsync(int tenantId) {
             var tenant = await _tenantManager.FindByIdAsync(tenantId);
-            if (tenant == null)
-            {
+            if (tenant == null) {
                 throw new UserFriendlyException(L("UnknownTenantId{0}", tenantId));
             }
 
-            if (!tenant.IsActive)
-            {
+            if (!tenant.IsActive) {
                 throw new UserFriendlyException(L("TenantIdIsNotActive{0}", tenantId));
             }
 
             return tenant;
         }
 
-        protected virtual void CheckErrors(IdentityResult identityResult)
-        {
+        protected virtual void CheckErrors(IdentityResult identityResult) {
             identityResult.CheckErrors(LocalizationManager);
         }
     }

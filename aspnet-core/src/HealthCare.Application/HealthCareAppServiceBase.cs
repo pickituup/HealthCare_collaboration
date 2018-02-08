@@ -7,40 +7,33 @@ using Abp.Runtime.Session;
 using HealthCare.Authorization.Users;
 using HealthCare.MultiTenancy;
 
-namespace HealthCare
-{
+namespace HealthCare {
     /// <summary>
     /// Derive your application services from this class.
     /// </summary>
-    public abstract class HealthCareAppServiceBase : ApplicationService
-    {
+    public abstract class HealthCareAppServiceBase : ApplicationService {
         public TenantManager TenantManager { get; set; }
 
         public UserManager UserManager { get; set; }
 
-        protected HealthCareAppServiceBase()
-        {
+        protected HealthCareAppServiceBase() {
             LocalizationSourceName = HealthCareConsts.LocalizationSourceName;
         }
 
-        protected virtual Task<User> GetCurrentUserAsync()
-        {
+        protected virtual Task<User> GetCurrentUserAsync() {
             var user = UserManager.FindByIdAsync(AbpSession.GetUserId().ToString());
-            if (user == null)
-            {
+            if (user == null) {
                 throw new Exception("There is no current user!");
             }
 
             return user;
         }
 
-        protected virtual Task<Tenant> GetCurrentTenantAsync()
-        {
+        protected virtual Task<Tenant> GetCurrentTenantAsync() {
             return TenantManager.GetByIdAsync(AbpSession.GetTenantId());
         }
 
-        protected virtual void CheckErrors(IdentityResult identityResult)
-        {
+        protected virtual void CheckErrors(IdentityResult identityResult) {
             identityResult.CheckErrors(LocalizationManager);
         }
     }
