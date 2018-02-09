@@ -3,7 +3,6 @@ using Abp.Zero.EntityFrameworkCore;
 using HealthCare.Authorization.Roles;
 using HealthCare.Authorization.Users;
 using HealthCare.MultiTenancy;
-using HealthCare.Messages;
 
 namespace HealthCare.EntityFrameworkCore {
     public class HealthCareDbContext : AbpZeroDbContext<Tenant, Role, User, HealthCareDbContext> {

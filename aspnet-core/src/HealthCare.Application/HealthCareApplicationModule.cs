@@ -3,7 +3,6 @@ using Abp.Modules;
 using Abp.Reflection.Extensions;
 using Castle.MicroKernel.Registration;
 using HealthCare.Authorization;
-using HealthCare.TestingFirstApi;
 
 namespace HealthCare {
     [DependsOn(
