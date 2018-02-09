@@ -10,7 +10,6 @@ namespace HealthCare.EntityFrameworkCore {
         /* Define a DbSet for each entity of the application */
 
         //public virtual DbSet<UserProfile> UserProfile { get; set; }
-        public DbSet<Message> Messages { get; set; }
 
         public HealthCareDbContext(DbContextOptions<HealthCareDbContext> options)
             : base(options) {
